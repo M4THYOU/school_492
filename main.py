@@ -9,7 +9,7 @@ def main():
     accepted = p.school_apply([SchoolOptions.Ivey, SchoolOptions.State, SchoolOptions.Community])
     
     # pick which to attend, if accepted.
-    p.school_select(accepted[1])
+    p.school_select(accepted[0])
     print('Going to', p.school.name)
 
     # apply to summer internships.
