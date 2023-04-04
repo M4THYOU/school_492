@@ -39,6 +39,7 @@ class SchoolOptions(Enum):
     Ivey = 1
     State = 2
     Community = 3
+    No_School = 4
 
 
 class JobOptions(Enum):
@@ -70,6 +71,7 @@ class LifePlayer:
         self.race = Race(randint(1, 4))
         self.gender = Gender(randint(1, 3))
         self.household_income = Race.income(self.race)
+        self.school = SchoolOptions.No_School
 
         self.job_hops = 0
         self.promotions = 0
