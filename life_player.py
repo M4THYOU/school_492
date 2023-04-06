@@ -1,5 +1,5 @@
 from enum import Enum
-from random import randint, random
+from random import randint, random, gauss
 
 
 IS_DEBUG = True
@@ -15,18 +15,21 @@ class Race(Enum):
     # median household income by race.
     @classmethod
     def income(cls, race):
+        v = 78000
         if race == Race.White:
-            return 78000
+            v = 78000
         elif race == Race.Black:
-            return 48000
+            v = 48000
         elif race == Race.Hispanic:
-            return 58000
+            v = 58000
         elif race == Race.Asian:
-            return 101000
+            v = 101000
         elif race == Race.All_Races:
-            return 78000
+            v = 78000
         else:
             raise ValueError('Invalid race')
+
+        return max(v, int(gauss(v, 50000)))
 
 
 class Gender(Enum):
