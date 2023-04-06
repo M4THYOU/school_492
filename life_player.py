@@ -76,6 +76,7 @@ class LifePlayer:
         self.job_hops = 0
         self.promotions = 0
         self.jobs = []
+        self.yoe = 0
 
 
     # p is probability the thing happens. 0 <= p <= 1.
@@ -264,6 +265,32 @@ class LifePlayer:
             bonus = 0.36
 
         return bonus * bonus_factor
+    
+
+    # these computations are arbitrary.
+    # just using it to show that as a person gets more YOE, it's easier to get a job.
+    def _job_history_bonus(self):
+        c = 0
+        for n in self.jobs:
+            c += n.value
+        c += self.promotions * 2
+        c += self.yoe
+
+        if c <= 3:
+            return 0
+        elif c <= 6:
+            return 0.1
+        elif c <= 10:
+            return 0.2
+        elif c <= 15:
+            return 0.4
+        elif c <= 20:
+            return 0.6
+        elif c <= 28:
+            return 0.8
+        else:
+            return 1
+
 
 
     # https://www.eeoc.gov/special-report/diversity-high-tech
@@ -342,6 +369,7 @@ class LifePlayer:
     # just returns the 'best' option.
     # now we consider school, race, gender.
     def intern_apply(self, job_opts):
+        self.yoe += 1
         res = []
         for job in job_opts:
             p = 0.0
@@ -363,10 +391,11 @@ class LifePlayer:
         if IS_DEBUG:
             print('\t', res)
         self.jobs.append(max(res))
-        return self.jobs[-1]
+        return res
 
 
     def job_apply(self, job_opts):
+        self.yoe += 1
         # tier the jobs.
         # only return a job > the cur job.
 
@@ -393,21 +422,77 @@ class LifePlayer:
         if IS_DEBUG:
             print('\t', res)
         if res:
-            new_job = max(res)
-            if self.jobs[-1] <= new_job:
-                self.job_hops += 1
-                self.jobs.append(max(res))
-        return self.jobs[-1]
+            self.jobs.append(max(res))
+        return res
 
 
     # return true if promoted, else false.
     def job_promotion(self):
+        self.yoe += 1
         p = self._compute_promo_prob()
         res = self.biased_flip(p)
         if res:
             self.promotions += 1
         return res
 
+    
+    def job_switch(self, job_opts):
+        self.yoe += 1
+        res = []
+        for job in job_opts:
+            p = 0.0
+            if job == JobOptions.FAANG:
+                p = self._compute_faang_acceptance_prob()
+            elif job == JobOptions.Startup:
+                p = self._compute_other_acceptance_prob()
+            elif job == JobOptions.Local_IT_Company:
+                p = self._compute_other_acceptance_prob()
+            elif job == JobOptions.McDonalds:
+                p = 1
+
+            p_2 = self._job_history_bonus()
+            if IS_DEBUG:
+                print('\t', p_2)
+            p = min(1, p+p_2)
+
+            if IS_DEBUG:
+                print('\t', job, p)
+
+            if self.biased_flip(p):
+                res.append(job)
+
+        if IS_DEBUG:
+            print('\t', res)
+        if res:
+            new_job = max(res)
+            if self.jobs[-1] <= new_job:
+                self.job_hops += 1
+                self.jobs.append(max(res))
+        return res
+
+
+    # data comes from https://college.harvard.edu/financial-aid/net-price-calculator
+    # Harvard's financial aid calculator. Filled in the fields using the median household income
+    # values we found earlier.
+    # so financial aid is indirectly dependent on race.
+    def financial_aid(self):
+        res = 0
+        if self.race == Race.White:
+            res = 41000
+        elif self.race == Race.Black:
+            res = 60000
+        elif self.race == Race.Hispanic:
+            res = 55000
+        elif self.race == Race.Asian:
+            res = 12000
+        elif self.race == Race.All_Races:
+            res = 41000
+        else:
+            raise ValueError('Invalid race')
+
+        return res
+
+    
     def summary(self):
         job_count = self.promotions + self.job_hops
         final_salary = SalaryBands.L3.value

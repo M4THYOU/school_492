@@ -13,12 +13,22 @@ def main():
     print('Going to', p.school.name)
 
     # apply to summer internships.
-    job = p.intern_apply([JobOptions.FAANG, JobOptions.Startup, JobOptions.Local_IT_Company, JobOptions.McDonalds])
-    print('Interning at', job.name)
+    jobs = p.intern_apply([JobOptions.FAANG, JobOptions.Startup, JobOptions.Local_IT_Company, JobOptions.McDonalds])
+    if jobs:
+        job = jobs[0]
+        print('Interning at', job.name)
+    else:
+        job = JobOptions.McDonalds
+        print('Interning at', job.name)
 
     # apply for new grad job.
-    job = p.job_apply([JobOptions.FAANG, JobOptions.Startup, JobOptions.Local_IT_Company])
-    print('First job at', job.name)
+    jobs = p.job_apply([JobOptions.FAANG, JobOptions.Startup, JobOptions.Local_IT_Company])
+    if jobs:
+        job = jobs[0]
+        print('First job at', job.name)
+    else:
+        job = JobOptions.Local_IT_Company
+        print('First job at', job.name)
 
     # LOOP 5 times:
         # pick promotion or job hop
@@ -29,8 +39,12 @@ def main():
             print('Went for promotion, did you get it?', did_get)
         else:
             old_job = p.jobs[-1]
-            new_job = p.job_apply([JobOptions.FAANG, JobOptions.Startup, JobOptions.Local_IT_Company])
-            print('Switching jobs from', old_job.name, 'to', new_job.name)
+            new_jobs = p.job_switch([JobOptions.FAANG, JobOptions.Startup, JobOptions.Local_IT_Company])
+            if new_jobs:
+                new_job = new_jobs[0]
+                print('Switching jobs from', old_job.name, 'to', new_job.name)
+            else:
+                print('Failed to get a new job.')
 
     # all in all you've ended life with x promotions, y job hops, and salary of $zzz.
     print(p.summary())
