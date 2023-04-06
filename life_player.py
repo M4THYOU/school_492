@@ -2,7 +2,7 @@ from enum import Enum
 from random import randint, random, gauss
 
 
-IS_DEBUG = True
+IS_DEBUG = False
 
 class Race(Enum):
     White = 1
@@ -29,7 +29,7 @@ class Race(Enum):
         else:
             raise ValueError('Invalid race')
 
-        return max(v, int(gauss(v, 50000)))
+        return max(v, int(gauss(v, 100000)))
 
 
 class Gender(Enum):
@@ -433,67 +433,87 @@ class LifePlayer:
     def job_promotion(self):
         self.yoe += 1
         p = self._compute_promo_prob()
+        p_2 = self._job_history_bonus()
+        p = min(1, p+p_2)
+
         res = self.biased_flip(p)
         if res:
             self.promotions += 1
         return res
 
     
-    def job_switch(self, job_opts):
+    def job_switch(self, job):
         self.yoe += 1
         res = []
-        for job in job_opts:
-            p = 0.0
-            if job == JobOptions.FAANG:
-                p = self._compute_faang_acceptance_prob()
-            elif job == JobOptions.Startup:
-                p = self._compute_other_acceptance_prob()
-            elif job == JobOptions.Local_IT_Company:
-                p = self._compute_other_acceptance_prob()
-            elif job == JobOptions.McDonalds:
-                p = 1
+        
+        p = 0.0
+        if job == JobOptions.FAANG:
+            p = self._compute_faang_acceptance_prob()
+        elif job == JobOptions.Startup:
+            p = self._compute_other_acceptance_prob()
+        elif job == JobOptions.Local_IT_Company:
+            p = self._compute_other_acceptance_prob()
+        elif job == JobOptions.McDonalds:
+            p = 1
 
-            p_2 = self._job_history_bonus()
-            if IS_DEBUG:
-                print('\t', p_2)
-            p = min(1, p+p_2)
-
-            if IS_DEBUG:
-                print('\t', job, p)
-
-            if self.biased_flip(p):
-                res.append(job)
+        p_2 = self._job_history_bonus()
+        if IS_DEBUG:
+            print('\t', p_2)
+        p = min(1, p+p_2)
 
         if IS_DEBUG:
-            print('\t', res)
-        if res:
-            new_job = max(res)
-            if self.jobs[-1] <= new_job:
-                self.job_hops += 1
-                self.jobs.append(max(res))
-        return res
+            print('\t', job, p)
+
+        did_get = self.biased_flip(p)
+        if did_get:
+            self.job_hops += 1
+            self.jobs.append(job)
+        return did_get
 
 
     # data comes from https://college.harvard.edu/financial-aid/net-price-calculator
-    # Harvard's financial aid calculator. Filled in the fields using the median household income
-    # values we found earlier.
+    # Harvard's financial aid calculator.
+    # Filled in the fields using the median household income values we found earlier.
     # so financial aid is indirectly dependent on race.
+    # since fin aid is based entirely on household income which (in our simple model) is based entirely on race.
+    # Doing 10k ranges here. p is based on what portion of tuition the calculator says is covered by
+    #   fin aid, for the upper end of the range.
+    # can be reproduced by setting the upper bound as parental income and total savings to 500k.
+    # Then doing estimated_scholarship / total_costs
     def financial_aid(self):
-        res = 0
-        if self.race == Race.White:
-            res = 41000
-        elif self.race == Race.Black:
-            res = 60000
-        elif self.race == Race.Hispanic:
-            res = 55000
-        elif self.race == Race.Asian:
-            res = 12000
-        elif self.race == Race.All_Races:
-            res = 41000
+        p = 0
+        if self.household_income <= 70000:
+            p = 1
+        elif self.household_income <= 80000:
+            p = 0.8
+        elif self.household_income <= 90000:
+            p = 0.76
+        elif self.household_income <= 100000:
+            p = 0.74
+        elif self.household_income <= 110000:
+            p = 0.72
+        elif self.household_income <= 120000:
+            p = 0.69
+        elif self.household_income <= 130000:
+            p = 0.66
+        elif self.household_income <= 140000:
+            p = 0.63
+        elif self.household_income <= 150000:
+            p = 0.59
+        elif self.household_income <= 160000:
+            p = 0.54
+        elif self.household_income <= 170000:
+            p = 0.49
+        elif self.household_income <= 180000:
+            p = 0.43
+        elif self.household_income <= 190000:
+            p = 0.28
+        elif self.household_income <= 200000:
+            p = 0.24
         else:
-            raise ValueError('Invalid race')
+            p = 0.0
 
-        return res
+        return self.biased_flip(p)
 
     
     def summary(self):

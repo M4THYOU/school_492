@@ -12,6 +12,8 @@ def main():
     p.school_select(accepted[0])
     print('Going to', p.school.name)
 
+    print('Financial Aid?', p.financial_aid())
+
     # apply to summer internships.
     jobs = p.intern_apply([JobOptions.FAANG, JobOptions.Startup, JobOptions.Local_IT_Company, JobOptions.McDonalds])
     if jobs:
@@ -39,10 +41,9 @@ def main():
             print('Went for promotion, did you get it?', did_get)
         else:
             old_job = p.jobs[-1]
-            new_jobs = p.job_switch([JobOptions.FAANG, JobOptions.Startup, JobOptions.Local_IT_Company])
-            if new_jobs:
-                new_job = new_jobs[0]
-                print('Switching jobs from', old_job.name, 'to', new_job.name)
+            got_new_job = p.job_switch(JobOptions.FAANG)
+            if got_new_job:
+                print('Jobs switched to', p.jobs[-1])
             else:
                 print('Failed to get a new job.')
 
